@@ -37,7 +37,7 @@ void handleR3() {
     cout << "Please enter Member Number: ";
     cin >> inputID;
 
-    // ÀË¬d½s¸¹¬O§_¦s¦b [cite: 105, 106, 107]
+    // æª¢æŸ¥ç·¨è™Ÿæ˜¯å¦å­˜åœ¨ [cite: 105, 106, 107]
     bool exists = false;
     int index = -1;
     for (int i = 0; i < memberList.size(); i++) {
@@ -83,13 +83,13 @@ void handleR3() {
         }
 
         if (success) {
-            // 1. ¦Û°Ê¥Í¦¨ Member Number (2026 + ÀH¾÷5¦ì) [cite: 44, 111]
+            // 1. è‡ªå‹•ç”Ÿæˆ Member Number (2026 + éš¨æ©Ÿ5ä½) [cite: 44, 111]
             string newID = "2026" + to_string(rand() % 90000 + 10000);
 
-            // 2. ­pºâ MRZ (³o³¡¤À»İ­n¹ê§@ R1.1 ªººâªk) [cite: 54, 70, 111]
-            int calculatedMRZ = 3; // °²³]­pºâµ²ªG¬° 3
+            // 2. è¨ˆç®— MRZ (é€™éƒ¨åˆ†éœ€è¦å¯¦ä½œ R1.1 çš„ç®—æ³•) [cite: 54, 70, 111]
+            int calculatedMRZ = 3; // å‡è¨­è¨ˆç®—çµæœç‚º 3
 
-            // 3. ¥[¤J¨t²Î [cite: 111]
+            // 3. åŠ å…¥ç³»çµ± [cite: 111]
             Member newMember(newID, tier, passport, calculatedMRZ, name, 0);
             memberList.push_back(newMember);
             cout << "New account created! ID: " << newID << endl;
