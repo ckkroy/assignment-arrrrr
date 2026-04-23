@@ -2,10 +2,10 @@
 #include <string>
 #include <vector>
 #include <iomanip>
+#include <cctype>
+#include <cstdlib>
+#include <ctime> 
 using namespace std;
-
-string GenMemNum(const vector<Member>& vMember);
-int GenMRZ(const string& pNum);
 
 class Member {
 public:
@@ -40,6 +40,9 @@ private:
     int mileageBalance;
 };
 
+string GenMemNum(const vector<Member>& vMember);
+int GenMRZ(const string& pNum);
+
 void R3(vector<Member>& vMember) {
     string inputID;
     int index = -1;
@@ -72,52 +75,62 @@ void R3(vector<Member>& vMember) {
     else {
         cout << "Member Not Found." << endl;
         string name, passport, tier;
-        int attempts = 0;
-        bool success = true;
 
-        while (attempts < 3) {
-            attempts++;
+        for (int i = 0; i < 3; ++i) {
+            bool success = true;
             cout << "Enter Name: ";
-            cin.ignore();
+            cin.ignore(10000, '\n');
             getline(cin, name);
             cout << "Enter Passport (e.g., A12345678): ";
             cin >> passport;
             cout << "Enter Tier (Green/Silver/Gold/Diamond): ";
             cin >> tier;
 
-            if (!(passport.length() == 9 && isupper(passport[0]) && isdigit(passport[1]) && isdigit(passport[2]) && isdigit(passport[3]) && isdigit(passport[4]) && isdigit(passport[5]) && isdigit(passport[6]) && isdigit(passport[7]) && isdigit(passport[8]))) {
+            if (passport.length() != 9 ) {
                 success = false;
-                break;
+            }
+            else {
+                if (!isupper(passport[0])) {
+                    success = false;
+                }
+
+                for (int j = 1; j < 9; ++j) {
+                    if (!isdigit(passport[j])) {
+                        success = false;
+                        break;
+                    }
+                }
             }
 
             if (tier != "Green" && tier != "Silver" && tier != "Gold" && tier != "Diamond") {
                 success = false;
-                break;
             }
-
-            if (!success && attempts < 3) {
-                cout << "Invalid input! Remaining attempts: " << 3 - attempts << endl;
-            }
-
-            if (success) {
+            
+            if (success == true) {
                 string Mnum = GenMemNum(vMember);
                 int MRZ = GenMRZ(passport);
                 Member newMember(Mnum, name, tier, passport, MRZ, 0);
                 vMember.push_back(newMember);
-				cout << "\nAccount created successfully!" << endl;
-
+                cout << "\nAccount created successfully!" << endl;
+				break;  
             }
-            if (attempts >= 3) {
+            else if (i == 2) {
                 cout << "Failed to create account after 3 attempts. Return to main page" << endl;
             }
-        }
+            else {
+                cout << "Invalid input! Remaining attempts: " << 2 - i << endl;
+            }
+		}
     }
 }
 
 string GenMemNum(const vector<Member>& vMember) {
     string newNumber;
     bool unique;
-    string year = "2026";
+    time_t t = time(0);
+    tm* now = localtime(&t);
+    int year_int = now->tm_year + 1900;
+    string year = to_string(year_int);
 
     do {
         unique = true;
@@ -146,16 +159,37 @@ int GenMRZ(const string& pNum) {
 }
 
 int main() {
+    srand(time(0));
     vector<Member> vMember;
+
+    vMember.push_back(Member("202611111", "Test User", "Gold", "T12345678", 6, 50000));
+    vMember.push_back(Member("202522222", "Another User", "Silver", "U87654321", 2, 25000));
+
     char input;
     do {
-        cout << "\nEnter your option ('3' to test, 'q' to quit): ";
+        cout << "\nEnter your option ('3' to test,'d' to display, 'q' to quit): ";
         cin >> input;
 
         if (input == '3') {
             R3(vMember);
         }
+        else if (input == 'd') {
+            cout << "\n--- Displaying All Member Accounts ---" << endl;
 
+            // First, check if the vector is empty
+            if (vMember.empty()) {
+                cout << "There are no members in the system to display." << endl;
+            }
+            else {
+                // If it's not empty, loop through each member
+                for (int i = 0; i < vMember.size(); i++) {
+                    // Call the DisplayInfo() function on the member at the current position
+                    vMember[i].DisplayInfo();
+					cout << endl;   
+                }
+            }
+            cout << "--------------------------------------" << endl;
+        }
     } while (input != 'q');
 
     return 0;
