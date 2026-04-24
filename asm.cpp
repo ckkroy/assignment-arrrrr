@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <iomanip>
 #include <cctype>
 #include <cstdlib>
 #include <ctime>
@@ -17,22 +18,13 @@ private:
     int mileageBalance;
 
 public:
-    Member() {
-        memberNumber = "";
-        memberTier = "";
-        passportNumber = "";
-        mrz = 0;
-        name = "";
-        mileageBalance = 0;
-    }
-
-    Member(string num, string tier, string pass, int m, string n, int bal) {
+    Member(string num, string name, string tier, string passport, int MRZ, int balance) {
         memberNumber = num;
+        memberName = name;
         memberTier = tier;
-        passportNumber = pass;
-        mrz = m;
-        name = n;
-        mileageBalance = bal;
+        passportNumber = passport;
+        mrz = MRZ;
+        mileageBalance = balance;
     }
 
     string getMemNum() const { 
@@ -103,11 +95,12 @@ void setSystemDate(string& outDate);
 void loadStartingData();
 void openCloseAccount();   // R3
 void creditsAndExit();     // R6
-string GenMemNum();
+string GenMemNum(const vector<Member>& vMember);
 int GenMRZ(const string& pNum);
 
 int main() {
     srand(time(0));
+    vector<Member> vMember;
 
     int choice;
     bool exitProgram = false;
@@ -139,9 +132,11 @@ int main() {
                 cout << "Feature not implemented.\n";
                 break;
             case 3:
-                openCloseAccount();
+                openCloseAccount(vMember);
                 break;
             case 4:
+                cout << "Feature not implemented.\n";
+                break;
             case 5:
                 cout << "Feature not implemented.\n";
                 break;
@@ -247,7 +242,7 @@ void loadStartingData() {
     dataLoaded = true;
 }
 
-string GenMemNum() {
+string GenMemNum(const vector<Member>& vMember) {
     string newNumber;
     bool unique;
     time_t t = time(0);
@@ -319,21 +314,25 @@ void openCloseAccount() {
         cout << "Member Not Found. Creating new account...\n";
         string name, passport, tier;
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 3; ++i) {
             bool success = true;
             cout << "Enter Name: ";
-            cin.ignore(1000, '\n');
+            cin.ignore(10000, '\n');
             getline(cin, name);
             cout << "Enter Passport (e.g., A12345678): ";
             cin >> passport;
             cout << "Enter Tier (Green/Silver/Gold/Diamond): ";
             cin >> tier;
 
-            if (passport.length() != 9) {
+            if (passport.length() != 9 ) {
                 success = false;
-            } else {
-                if (!isupper(passport[0])) success = false;
-                for (int j = 1; j < 9; j++) {
+            }
+            else {
+                if (!isupper(passport[0])) {
+                    success = false;
+                }
+
+                for (int j = 1; j < 9; ++j) {
                     if (!isdigit(passport[j])) {
                         success = false;
                         break;
@@ -346,9 +345,10 @@ void openCloseAccount() {
             }
 
             if (success) {
-                string newNum = GenMemNum();
+                string newNum = GenMemNum(vMember);
                 int mrzVal = GenMRZ(passport);
-                members.push_back(Member(newNum, tier, passport, mrzVal, name, 0));
+                Member newMember(Mnum, name, tier, passport, MRZ, 0);
+                vMember.push_back(newMember);
                 cout << "\nAccount created successfully!\n";
                 members.back().DisplayInfo();
                 break;
