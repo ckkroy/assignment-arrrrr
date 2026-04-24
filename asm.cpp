@@ -242,14 +242,10 @@ void loadStartingData() {
     dataLoaded = true;
 }
 
-string GenMemNum(const vector<Member>& vMember) {
+string GenMemNum() {
     string newNumber;
     bool unique;
-    time_t t = time(0);
-    tm* now = localtime(&t);
-    int year_int = now->tm_year + 1900;
-    string year = to_string(year_int);
-
+    string year = systemDate.substr(systemDate.length() - 4);
     do {
         unique = true;
         int randomDigits = rand() % 90000 + 10000;
