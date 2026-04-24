@@ -4,76 +4,310 @@
 #include <iomanip>
 #include <cctype>
 #include <cstdlib>
-#include <ctime> 
+#include <ctime>
+
 using namespace std;
 
 class Member {
+private:
+    string memberNumber;
+    string memberTier;
+    string passportNumber;
+    int mrz;
+    string name;
+    int mileageBalance;
+
 public:
     Member(string num, string name, string tier, string passport, int MRZ, int balance) {
         memberNumber = num;
         memberName = name;
         memberTier = tier;
-
         passportNumber = passport;
         mrz = MRZ;
         mileageBalance = balance;
     }
 
-    string getMemNum() const {
+    string getMemNum() const { 
         return memberNumber;
+    }
+    string getName() const {
+         return name; 
     }
 
     void DisplayInfo() const {
         cout << "Member Number: " << memberNumber << endl;
-        cout << "Name: " << memberName << endl;
+        cout << "Name: " << name << endl;
         cout << "Tier: " << memberTier << endl;
         cout << "Passport: " << passportNumber << " (MRZ: " << mrz << ")" << endl;
         cout << "Balance: " << mileageBalance << endl;
     }
-
-private:
-    string memberName;
-    string passportNumber;
-    string memberTier;
-    string memberNumber;
-    int mrz;
-    int mileageBalance;
 };
 
+class Flight {
+private:
+    string memberNumber;
+    string origin;
+    string destination;
+    string flightNumber;
+    string cabinClass;
+    string departureDate;
+    string creationDate;
+    bool updated;
+
+public:
+    Flight() {
+        memberNumber = "";
+        origin = "";
+        destination = "";
+        flightNumber = "";
+        cabinClass = "";
+        departureDate = "";
+        creationDate = "";
+        updated = false;
+    }
+
+    Flight(string memNum, string orig, string dest, string fNum,
+           string cabin, string depDate, string createDate, bool upd) {
+        memberNumber = memNum;
+        origin = orig;
+        destination = dest;
+        flightNumber = fNum;
+        cabinClass = cabin;
+        departureDate = depDate;
+        creationDate = createDate;
+        updated = upd;
+    }
+
+    string getMemNum() const {
+        return memberNumber;
+    }   
+};
+
+vector<Member> members;
+vector<Flight> flights;
+string systemDate = "";
+bool dataLoaded = false;
+
+void displayWelcomeMessage();
+void displayMainMenu();
+bool isValidDate(const string& date);
+void setSystemDate(string& outDate);
+void loadStartingData();
+void openCloseAccount();   // R3
+void creditsAndExit();     // R6
 string GenMemNum(const vector<Member>& vMember);
 int GenMRZ(const string& pNum);
 
-void R3(vector<Member>& vMember) {
-    string inputID;
-    int index = -1;
+int main() {
+    srand(time(0));
+    vector<Member> vMember;
 
+    int choice;
+    bool exitProgram = false;
+
+    displayWelcomeMessage();
+
+    while (!exitProgram) {
+        displayMainMenu();
+        cin >> choice;
+
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(1000, '\n');
+            cout << "Invalid input. Please enter a number between 1 and 6.\n";
+            continue;
+        }
+        cin.ignore(1000, '\n');
+
+        if ((choice >= 2 && choice <= 5) && !dataLoaded) {
+            cout << "Error: Please load starting data (Option 1) first.\n";
+            continue;
+        }
+
+        switch (choice) {
+            case 1:
+                loadStartingData();
+                break;
+            case 2:
+                cout << "Feature not implemented.\n";
+                break;
+            case 3:
+                openCloseAccount(vMember);
+                break;
+            case 4:
+                cout << "Feature not implemented.\n";
+                break;
+            case 5:
+                cout << "Feature not implemented.\n";
+                break;
+            case 6:
+                creditsAndExit();
+                exitProgram = true;
+                break;
+            default:
+                cout << "Invalid option. Please enter 1-6.\n";
+        }
+        cout << endl;
+    }
+    return 0;
+}
+
+void displayWelcomeMessage() {
+    cout << "============================================\n";
+    cout << "   Welcome to Frequent Flyer Program (FFP)  \n";
+    cout << "          Group Project SEHH2042            \n";
+    cout << "============================================\n\n";
+}
+
+void displayMainMenu() {
+    cout << "*** FFP Main Menu ***\n";
+    cout << "[1] Load Starting Data\n";
+    cout << "[2] Show All Member Accounts\n";
+    cout << "[3] Open or Close Member Account\n";
+    cout << "[4] Member Account Operations\n";
+    cout << "[5] Generate Daily Statement\n";
+    cout << "[6] Credits and Exit\n";
+    cout << "******************************\n";
+    cout << "Option (1-6): ";
+}
+ 
+bool isValidDate(const string& date) {
+    if (date.length() != 10) return false;
+    if (date[2] != '-' || date[5] != '-') return false;
+
+    int d = (date[0] - '0') * 10 + (date[1] - '0');
+    int m = (date[3] - '0') * 10 + (date[4] - '0');
+    int y = (date[6] - '0') * 1000 + (date[7] - '0') * 100
+          + (date[8] - '0') * 10   + (date[9] - '0');
+
+    if (y != 2025) return false;
+    if (m < 1 || m > 12) return false;
+    if (d < 1 || d > 31) return false;
+
+    if ((m == 4 || m == 6 || m == 9 || m == 11) && d > 30) return false;
+    if (m == 2 && d > 28) return false;
+
+    return true;
+}
+
+// R1.2 
+void setSystemDate(string& outDate) {
+    int attempts = 0;
+    const string DEFAULT_DATE = "30-06-2025";
+    string input;
+
+    cout << "\n*** Set System Date for updating Mileage Points ***\n";
+    cout << "Please enter system date (DD-MM-YYYY): ";
+
+    while (attempts < 3) {
+        getline(cin, input);
+        if (isValidDate(input)) {
+            outDate = input;
+            cout << "System date set to: " << outDate << "\n";
+            return;
+        } else {
+            attempts++;
+            if (attempts < 3) {
+                cout << "Invalid format or out of range. Try again ("
+                     << (3 - attempts) << " attempts left): ";
+            }
+        }
+    }
+
+    outDate = DEFAULT_DATE;
+    cout << "\nWarning: Three invalid attempts. Default date "
+         << DEFAULT_DATE << " is set.\n";
+}
+
+// R1
+void loadStartingData() {
+    members.clear();
+    flights.clear();
+
+    members.push_back(Member("202456734", "Gold",   "A566778904", 0, "WONG Claire", 45000));
+    members.push_back(Member("202333890", "Green",  "C786789085", 0, "MA Kathy",     10000));
+    members.push_back(Member("202067856", "Silver", "E388768901", 0, "CHAN Peter",   53200));
+    members.push_back(Member("202211843", "Gold",   "E389000787", 0, "CHEUNG Alice", 30000));
+
+
+    flights.push_back(Flight("202211843", "Hong Kong", "London", "CC81", "First",   "28-05-2025", "01-05-2025", false));
+    flights.push_back(Flight("202211843", "London", "Hong Kong", "CC82", "First",   "10-06-2025", "01-05-2025", false));
+    flights.push_back(Flight("202333890", "London", "Dubai", "CC61", "Economy", "12-06-2025", "10-06-2025", false));
+    flights.push_back(Flight("202067856", "Hong Kong", "Dubai", "CC31", "Business","05-07-2025", "20-06-2025", false));
+    flights.push_back(Flight("202067856", "Dubai", "London", "CC62", "Business","08-07-2025", "20-06-2025", false));
+    flights.push_back(Flight("202456734", "Dubai", "Hong Kong", "CC32", "Business","05-08-2025", "02-08-2025", false));
+
+    cout << "\nStarting data loaded successfully!\n";
+    setSystemDate(systemDate);
+    dataLoaded = true;
+}
+
+string GenMemNum() {
+    string newNumber;
+    bool unique;
+    string year = systemDate.substr(systemDate.length() - 4);
+    do {
+        unique = true;
+        int randomDigits = rand() % 90000 + 10000;
+        newNumber = year + to_string(randomDigits);
+
+        for (int i = 0; i < members.size(); i++) {
+            if (members[i].getMemNum() == newNumber) {
+                unique = false;
+                break;
+            }
+        }
+    } while (!unique);
+    return newNumber;
+}
+
+int GenMRZ(const string& pNum) {
+    int weights[] = { 7, 3, 1, 7, 3, 1, 7, 3, 1 };
+    long long total = 0;
+    total += (pNum[0] - 'A' + 10) * weights[0];
+
+    for (int i = 1; i < 9; i++) {
+        total += (pNum[i] - '0') * weights[i];
+    }
+    return total % 10;
+}
+
+// R3  
+void openCloseAccount() {
+    string inputID;
     cout << "\nPlease enter Member Number: ";
     cin >> inputID;
 
-    for (int i = 0; i < vMember.size(); i++) {
-        if (vMember[i].getMemNum() == inputID) {
+    int index = -1;
+    for (int i = 0; i < members.size(); i++) {
+        if (members[i].getMemNum() == inputID) {
             index = i;
             break;
         }
     }
 
     if (index != -1) {
-        vMember[index].DisplayInfo();
+        members[index].DisplayInfo();
 
         char confirm;
         cout << "Are you sure you want to close this account? (y/n): ";
         cin >> confirm;
 
-        if (confirm == 'y' || confirm == 'Y') {
-            vMember.erase(vMember.begin() + index);
-            cout << "Account has been closed." << endl;
-        }
-        else {
-            cout << "Operation cancelled." << endl;
+        if (confirm == 'y' || confirm == 'Y') 
+        {
+            for (int i = flights.size() - 1; i >= 0; i--) {
+                if (flights[i].getMemNum() == inputID) {
+                    flights.erase(flights.begin() + i);
+                }
+            }
+            members.erase(members.begin() + index);
+            cout << "Account and related flights have been closed.\n";
+        } else {
+            cout << "Operation cancelled.\n";
         }
     }
     else {
-        cout << "Member Not Found." << endl;
+        cout << "Member Not Found. Creating new account...\n";
         string name, passport, tier;
 
         for (int i = 0; i < 3; ++i) {
@@ -105,92 +339,54 @@ void R3(vector<Member>& vMember) {
             if (tier != "Green" && tier != "Silver" && tier != "Gold" && tier != "Diamond") {
                 success = false;
             }
-            
-            if (success == true) {
-                string Mnum = GenMemNum(vMember);
-                int MRZ = GenMRZ(passport);
+
+            if (success) {
+                string newNum = GenMemNum(vMember);
+                int mrzVal = GenMRZ(passport);
                 Member newMember(Mnum, name, tier, passport, MRZ, 0);
                 vMember.push_back(newMember);
-                cout << "\nAccount created successfully!" << endl;
-				break;  
-            }
-            else if (i == 2) {
-                cout << "Failed to create account after 3 attempts. Return to main page" << endl;
-            }
-            else {
-                cout << "Invalid input! Remaining attempts: " << 2 - i << endl;
-            }
-		}
-    }
-}
-
-string GenMemNum(const vector<Member>& vMember) {
-    string newNumber;
-    bool unique;
-    time_t t = time(0);
-    tm* now = localtime(&t);
-    int year_int = now->tm_year + 1900;
-    string year = to_string(year_int);
-
-    do {
-        unique = true;
-        int randomDigits = rand() % 90000 + 10000;
-        newNumber = year + to_string(randomDigits);
-
-        for (int i = 0; i < vMember.size(); i++) {
-            if (vMember[i].getMemNum() == newNumber) {
-                unique = false;
+                cout << "\nAccount created successfully!\n";
+                members.back().DisplayInfo();
                 break;
+            } else if (i == 2) {
+                cout << "Failed to create account after 3 attempts. Returning to main menu.\n";
+            } else {
+                cout << "Invalid input! Remaining attempts: " << 2 - i << "\n";
             }
         }
-    } while (!unique);
-    return newNumber;
-}
-
-int GenMRZ(const string& pNum) {
-    int weights[] = { 7, 3, 1, 7, 3, 1, 7, 3, 1 };
-    long long total = 0;
-    total += (pNum[0] - 'A' + 10) * weights[0];
-
-    for (int i = 1; i < 9; i++) {
-        total += (pNum[i] - '0') * weights[i];
     }
-    return total % 10;
 }
 
-int main() {
-    srand(time(0));
-    vector<Member> vMember;
+//R6 
+void creditsAndExit() 
+{
+    char confirm;
+    bool valid = false;
 
-    vMember.push_back(Member("202611111", "Test User", "Gold", "T12345678", 6, 50000));
-    vMember.push_back(Member("202522222", "Another User", "Silver", "U87654321", 2, 25000));
+    while (!valid) {
+        cout << "\nAre you sure you want to exit? (Y/N): ";
+        cin >> confirm;
+        confirm = toupper(confirm);
+        cin.ignore(1000, '\n');
 
-    char input;
-    do {
-        cout << "\nEnter your option ('3' to test,'d' to display, 'q' to quit): ";
-        cin >> input;
-
-        if (input == '3') {
-            R3(vMember);
+        if (confirm == 'Y') {
+            valid = true;
+            cout << "\n============================================\n";
+            cout << "               CREDITS                     \n";
+            cout << "============================================\n";
+            cout << "Student Name: Lam Ka Leong          Student ID: 25128706S   Group: B01A\n";
+            cout << "Student Name: LI Yu Hin             Student ID: __________   Group: ____\n";
+            cout << "Student Name: FOK Yuk Sang Victor   Student ID: __________   Group: ____\n";
+            cout << "Student Name: CHIANG Cheuk Hang     Student ID: __________   Group: ____\n";
+            cout << "Student Name: CHAN Ka Kit           Student ID: __________   Group: ____\n";
+            cout << "Student Name: HO Hin San            Student ID: __________   Group: ____\n";
+            cout << "============================================\n";
+            cout << "Thank you for using FFP System. Goodbye!\n";
+        } else if (confirm == 'N') {
+            valid = true;
+            cout << "Exit cancelled. Returning to Main Menu...\n";
+        } else {
+            cout << "Invalid input. Please enter Y or N.\n";
         }
-        else if (input == 'd') {
-            cout << "\n--- Displaying All Member Accounts ---" << endl;
-
-            // First, check if the vector is empty
-            if (vMember.empty()) {
-                cout << "There are no members in the system to display." << endl;
-            }
-            else {
-                // If it's not empty, loop through each member
-                for (int i = 0; i < vMember.size(); i++) {
-                    // Call the DisplayInfo() function on the member at the current position
-                    vMember[i].DisplayInfo();
-					cout << endl;   
-                }
-            }
-            cout << "--------------------------------------" << endl;
-        }
-    } while (input != 'q');
-
-    return 0;
+    }
 }
