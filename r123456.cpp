@@ -156,7 +156,7 @@ void setSystemDate(string& outDate);
 void loadStartingData();
 void openCloseAccount();   // R3
 void creditsAndExit();     // R6
-string GenMemNum(const vector<Member>& vMember);
+string GenMemNum();
 int GenMRZ(const string& pNum);
 void showAllMemberAccounts();    //R2
 
@@ -171,11 +171,11 @@ void createFlightRecord(Member& m); //R4.3
 void redeemOrTransfer(Member& m); //R4.4
 void showMemberInfoBeforeReturn(const Member& m); //R4.5
 void memberAccountOperations(const string& memberNumber);//R4
-void generateDailyStatment(const string& memberNumber); //R5
+void generateDailyStatement(const string& memberNumber); //R5
 
 int main() {
     srand(time(0));
-    vector<Member> vMember;
+    
 
     int choice;
     bool exitProgram = false;
@@ -218,7 +218,7 @@ int main() {
         case 5:
             cout << "Enter the member number: \n";
             cin >> memNum;
-            generateDailyStatment(memNum);
+            generateDailyStatement(memNum);
             break;
         case 6:
             creditsAndExit();
@@ -305,10 +305,10 @@ void loadStartingData() {
     members.clear();
     flights.clear();
 
-    members.push_back(Member("202456734", "Gold", "A566778904", GenMRZ("A566778904"), "WONG Claire", 45000));
-    members.push_back(Member("202333890", "Green", "C786789085", GenMRZ("C786789085"), "MA Kathy", 10000));
-    members.push_back(Member("202067856", "Silver", "E388768901", GenMRZ("E388768901"), "CHAN Peter", 53200));
-    members.push_back(Member("202211843", "Gold", "E389000787", GenMRZ("E389000787"), "CHEUNG Alice", 30000));
+    members.push_back(Member("202456734", "Gold", "A56677890", GenMRZ("A56677890"), "WONG Claire", 45000));
+    members.push_back(Member("202333890", "Green", "C78678908", GenMRZ("C78678908"), "MA Kathy", 10000));
+    members.push_back(Member("202067856", "Silver", "E38876890", GenMRZ("E38876890"), "CHAN Peter", 53200));
+    members.push_back(Member("202211843", "Gold", "E38900078", GenMRZ("E38900078"), "CHEUNG Alice", 30000));
 
 
     flights.push_back(Flight("202211843", "Hong Kong", "London", "CC81", "First", "28-05-2025", "01-05-2025", false));
@@ -743,7 +743,13 @@ void redeemOrTransfer(Member& m) {
     cout << "Enter choice: ";
     int sub;
     cin >> sub;
-
+    
+    if (cin.fail()) {
+        cin.clear();
+        clearInput();
+        cout << "Invalid input. Returning to menu.\n";
+        return;
+    }
     if (sub == 1) {
         cout << "\nRedemption Catalog:\n";
         cout << "1. Movie voucher            3000 pts\n";
@@ -752,6 +758,12 @@ void redeemOrTransfer(Member& m) {
         cout << "Select gift number (1-3): ";
         int gift;
         cin >> gift;
+        if (cin.fail()) {
+            cin.clear();
+            clearInput();
+            cout << "Invalid input.\n";
+            return;
+        }
         int cost = 0;
         string desc;
         switch (gift) {
@@ -793,8 +805,10 @@ void redeemOrTransfer(Member& m) {
         }
         cout << "Enter amount of points to transfer: ";
         cin >> amount;
-        if (amount <= 0) {
-            cout << "Amount must be positive.\n";
+        if (cin.fail() || amount <= 0) {
+            cin.clear();
+            clearInput();
+            cout << "Invalid amount. Must be a positive integer.\n";
             return;
         }
         if (amount > m.getBalance()) {
@@ -828,8 +842,8 @@ void showMemberInfoBeforeReturn(const Member& m) {
     cout << "MRZ: " << m.getMRZ() << "\n";
     cout << "Mileage Points: " << m.getBalance() << "\n";
 
-    cout << "\nUnupdated flights (departure <= today):\n";
-    int sysInt = dateToInt(systemDate);
+    cout << "\nUnupdated flights:\n";
+    
     bool found = false;
     for (const auto& f : flights) {
         if (f.getMemNum() == m.getMemNum() && !f.isUpdated() &&
@@ -880,7 +894,7 @@ void memberAccountOperations(const string& memberNumber) {
 }
 
 //R5
-void generateDailyStatment(const string& memberNumber) {
+void generateDailyStatement(const string& memberNumber) {
     int idx = -1;
     for (int i = 0; i < members.size(); ++i)
         if (members[i].getMemNum() == memberNumber) { idx = i; break; }
@@ -901,7 +915,7 @@ void generateDailyStatment(const string& memberNumber) {
     cout << "Upcoming Itinerary: " << endl;
     cout << left << setw(15) << "Origin" << setw(20) << "Destination" << setw(20) << "Flight Number" << setw(15) << "Cabin Class" << setw(15) << "Departure Date" << endl;
     for (int i = 0; i < flights.size(); ++i) {
-        if (flights[i].getMemNum() == memberNumber) {
+        if (flights[i].getMemNum() == memberNumber && dateToInt(flights[i].getDepartureDate()) > sysInt) {
             cout << left << setw(15) << flights[i].getOrigin() << setw(20) << flights[i].getDestination() << setw(20) << flights[i].getFlightNumber() << setw(15) << flights[i].getCabinClass() << setw(15) << flights[i].getDepartureDate() << endl;
         }
     }
@@ -923,7 +937,7 @@ void generateDailyStatment(const string& memberNumber) {
         cout << "4%";
     }
     else cout << "6%";
-};
+}
 
 //R6 
 void creditsAndExit()
