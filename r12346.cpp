@@ -438,7 +438,7 @@ void showAllMemberAccounts() {
     displayMemberTable();
     displayFlightTable();
     cout << "\nPress Enter to return to Main Menu...";
-    cin.ignore(1000, '\n');
+
     cin.get();
 }
 
