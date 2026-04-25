@@ -5,6 +5,8 @@
 #include <cctype>
 #include <cstdlib>
 #include <ctime>
+#include <algorithm>
+#include <sstream>
 
 using namespace std;
 
@@ -32,6 +34,18 @@ public:
     }
     string getName() const {
          return name; 
+    }
+    string getTier() const { 
+        return memberTier; 
+    }
+    string getPassport() const { 
+        return passportNumber;
+    }
+    int getMRZ() const {
+        return mrz; 
+    }
+    int getBalance() const {
+        return mileageBalance;
     }
 
     void DisplayInfo() const {
@@ -80,7 +94,28 @@ public:
 
     string getMemNum() const {
         return memberNumber;
-    }   
+    } 
+    string getOrigin() const { 
+        return origin; 
+    }
+    string getDestination() const { 
+        return destination;
+    }
+    string getFlightNumber() const { 
+        return flightNumber; 
+    }
+    string getCabinClass() const { 
+        return cabinClass; 
+    }
+    string getDepartureDate() const {
+        return departureDate; 
+    }
+    string getCreationDate() const {
+        return creationDate; 
+    }
+    bool isUpdated() const {
+        return updated; 
+    }
 };
 
 vector<Member> members;
@@ -97,6 +132,7 @@ void openCloseAccount();   // R3
 void creditsAndExit();     // R6
 string GenMemNum(const vector<Member>& vMember);
 int GenMRZ(const string& pNum);
+void showAllMemberAccounts();    //R2
 
 int main() {
     srand(time(0));
@@ -129,7 +165,7 @@ int main() {
                 loadStartingData();
                 break;
             case 2:
-                cout << "Feature not implemented.\n";
+                showAllMemberAccounts();
                 break;
             case 3:
                 openCloseAccount(vMember);
@@ -224,10 +260,10 @@ void loadStartingData() {
     members.clear();
     flights.clear();
 
-    members.push_back(Member("202456734", "Gold",   "A566778904", 0, "WONG Claire", 45000));
-    members.push_back(Member("202333890", "Green",  "C786789085", 0, "MA Kathy",     10000));
-    members.push_back(Member("202067856", "Silver", "E388768901", 0, "CHAN Peter",   53200));
-    members.push_back(Member("202211843", "Gold",   "E389000787", 0, "CHEUNG Alice", 30000));
+    members.push_back(Member("202456734", "Gold",   "A566778904", GenMRZ("A566778904"), "WONG Claire", 45000));
+    members.push_back(Member("202333890", "Green",  "C786789085", GenMRZ("C786789085"), "MA Kathy",     10000));
+    members.push_back(Member("202067856", "Silver", "E388768901", GenMRZ("E388768901"), "CHAN Peter",   53200));
+    members.push_back(Member("202211843", "Gold",   "E389000787", GenMRZ("E389000787"), "CHEUNG Alice", 30000));
 
 
     flights.push_back(Flight("202211843", "Hong Kong", "London", "CC81", "First",   "28-05-2025", "01-05-2025", false));
@@ -270,6 +306,98 @@ int GenMRZ(const string& pNum) {
         total += (pNum[i] - '0') * weights[i];
     }
     return total % 10;
+}
+
+// R2
+static int dateToInt(const string& date) {
+    int d, m, y;
+    char dash1, dash2;
+    istringstream iss(date);
+    iss >> d >> dash1 >> m >> dash2 >> y;
+    return y * 10000 + m * 100 + d;
+}
+
+void displayMemberTable() {
+    cout << "\n=== Member Account Records ===\n";
+    cout << left
+         << setw(12) << "MemberNo"
+         << setw(10) << "Tier"
+         << setw(12) << "Passport"
+         << setw(6)  << "MRZ"
+         << setw(20) << "Name"
+         << setw(10) << "Points"
+         << endl;
+    cout << string(70, '-') << endl;
+    vector<Member> sortedMembers = members;
+    sort(sortedMembers.begin(), sortedMembers.end(),
+         [](const Member& a, const Member& b) {
+             return a.getName() < b.getName();
+         });
+
+    for (const auto& m : sortedMembers) {
+        cout << left
+             << setw(12) << m.getMemNum()
+             << setw(10) << m.getTier()
+             << setw(12) << m.getPassport()
+             << setw(6)  << m.getMRZ()
+             << setw(20) << m.getName()
+             << setw(10) << m.getBalance()
+             << endl;
+    }
+    cout << string(70, '-') << endl;
+}
+
+void displayFlightTable() {
+    cout << "\n=== Flight Records (Not Updated, Sorted by Departure Date Desc) ===\n";
+    cout << left
+         << setw(12) << "MemberNo"
+         << setw(12) << "Origin"
+         << setw(12) << "Dest"
+         << setw(10) << "Flight"
+         << setw(12) << "Cabin"
+         << setw(14) << "Departure"
+         << setw(14) << "Creation"
+         << setw(8)  << "Updated"
+         << endl;
+    cout << string(94, '-') << endl;
+
+    vector<Flight> validFlights;
+    for (const auto& f : flights) {
+        if (!f.isUpdated()) {
+            validFlights.push_back(f);
+        }
+    }
+
+    sort(validFlights.begin(), validFlights.end(),
+         [](const Flight& a, const Flight& b) {
+             return dateToInt(a.getDepartureDate()) > dateToInt(b.getDepartureDate());
+         });
+
+    for (const auto& f : validFlights) {
+        cout << left
+             << setw(12) << f.getMemNum()
+             << setw(12) << f.getOrigin()
+             << setw(12) << f.getDestination()
+             << setw(10) << f.getFlightNumber()
+             << setw(12) << f.getCabinClass()
+             << setw(14) << f.getDepartureDate()
+             << setw(14) << f.getCreationDate()
+             << setw(8)  << (f.isUpdated() ? "1" : "0")
+             << endl;
+    }
+    cout << string(94, '-') << endl;
+}
+
+void showAllMemberAccounts() {
+    if (!dataLoaded) {
+        cout << "No data loaded. Please use option [1] first.\n";
+        return;
+    }
+    displayMemberTable();
+    displayFlightTable();
+    cout << "\nPress Enter to return to Main Menu...";
+    cin.ignore(1000, '\n');
+    cin.get();
 }
 
 // R3  
