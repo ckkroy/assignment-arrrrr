@@ -160,7 +160,6 @@ string GenMemNum(const vector<Member>& vMember);
 int GenMRZ(const string& pNum);
 void showAllMemberAccounts();    //R2
 
-int dateToInt(const string& date);
 bool isValidPassport(const string& p);
 bool isValidFlightNumber(const string& fn);
 pair<string, string> getRoute(const string& flightNum);
@@ -532,14 +531,6 @@ void openCloseAccount() {
 }
 
 // R4
-int dateToInt(const string& date) {
-    if (date.length() < 10) return 0;
-    int d = (date[0] - '0') * 10 + (date[1] - '0');
-    int m = (date[3] - '0') * 10 + (date[4] - '0');
-    int y = (date[6] - '0') * 1000 + (date[7] - '0') * 100
-        + (date[8] - '0') * 10 + (date[9] - '0');
-    return y * 10000 + m * 100 + d;
-}
 
 bool isValidPassport(const string& p) {
     if (p.length() != 9) return false;
